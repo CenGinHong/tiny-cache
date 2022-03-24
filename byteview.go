@@ -1,4 +1,4 @@
-package TinyCache
+package main
 
 // ByteView 只读数据结构，用于表示缓存值
 type ByteView struct {

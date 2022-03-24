@@ -1,4 +1,4 @@
-package TinyCache
+package main
 
 import (
 	"TinyCache/lru"
