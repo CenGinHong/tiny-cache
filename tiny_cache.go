@@ -22,6 +22,7 @@ type Group struct {
 	name      string
 	getter    Getter
 	mainCache cache
+	peers     PeerPicker
 }
 
 var (
@@ -54,6 +55,14 @@ func GetGroup(name string) *Group {
 	return g
 }
 
+// RegisterPeers 将实现了 PeerPicker 接口的 HTTPPool 注入到 Group 中。
+func (g *Group) RegisterPeers(peers PeerPicker) {
+	if g.peers != nil {
+		panic("RegisterPeerPicker called more than once")
+	}
+	g.peers = peers
+}
+
 // Get 从Group获取值
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
@@ -68,9 +77,28 @@ func (g *Group) Get(key string) (ByteView, error) {
 	return g.load(key)
 }
 
-// load 从数据源中读取，这里暂时只实现了locally
+// load 使用 PickPeer() 方法选择节点，若非本机节点，则调用 getFromPeer() 从远程获取。若是本机节点或失败，则回退到 getLocally()
 func (g *Group) load(key string) (value ByteView, err error) {
+	if g.peers != nil {
+		// 选出一个节点，该节点是被包装后的HttpGetter
+		if peer, ok := g.peers.PickPeer(key); ok {
+			// 从实现了HttpGetter的里面获取缓存值
+			if value, err = g.getFromPeer(peer, key); err != nil {
+				return value, err
+			}
+			log.Println("[TinyCache] Failed to get from peer")
+		}
+	}
 	return g.getLocally(key)
+}
+
+// 实现了 PeerGetter 接口的 httpGetter 从访问远程节点，获取缓存值
+func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
+	bytes, err := peer.Get(g.name, key)
+	if err != nil {
+		return ByteView{}, err
+	}
+	return ByteView{b: bytes}, nil
 }
 
 // getLocally 通过回调函数Getter从数据源中读取数据
