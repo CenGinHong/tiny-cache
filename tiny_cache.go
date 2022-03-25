@@ -1,6 +1,7 @@
 package main
 
 import (
+	"TinyCache/single_flight"
 	"fmt"
 	"log"
 	"sync"
@@ -23,6 +24,7 @@ type Group struct {
 	getter    Getter
 	mainCache cache
 	peers     PeerPicker
+	loader    *single_flight.Group
 }
 
 var (
@@ -41,6 +43,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 		name:      name,
 		getter:    getter,
 		mainCache: cache{cacheBytes: cacheBytes},
+		loader:    &single_flight.Group{},
 	}
 	groups[name] = g
 	return g
@@ -79,17 +82,22 @@ func (g *Group) Get(key string) (ByteView, error) {
 
 // load 使用 PickPeer() 方法选择节点，若非本机节点，则调用 getFromPeer() 从远程获取。若是本机节点或失败，则回退到 getLocally()
 func (g *Group) load(key string) (value ByteView, err error) {
-	if g.peers != nil {
-		// 选出一个节点，该节点是被包装后的HttpGetter
-		if peer, ok := g.peers.PickPeer(key); ok {
-			// 从实现了HttpGetter的里面获取缓存值
-			if value, err = g.getFromPeer(peer, key); err != nil {
-				return value, err
+	// 加上singleFlight
+	viewi, err := g.loader.Do(key, func() (interface{}, error) {
+		if g.peers != nil {
+			if peer, ok := g.peers.PickPeer(key); ok {
+				if value, err = g.getFromPeer(peer, key); err == nil {
+					return value, nil
+				}
+				log.Println("[TinyCache] Filed to get from peer", err)
 			}
-			log.Println("[TinyCache] Failed to get from peer")
 		}
+		return g.getLocally(key)
+	})
+	if err == nil {
+		return viewi.(ByteView), nil
 	}
-	return g.getLocally(key)
+	return
 }
 
 // 实现了 PeerGetter 接口的 httpGetter 从访问远程节点，获取缓存值
