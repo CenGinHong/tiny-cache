@@ -1,8 +1,8 @@
 package main
 
 import (
-	"TinyCache/consistenthash"
 	"fmt"
+	"github.com/CenGinHong/TinyCache/consistenthash"
 	"io"
 	"io/ioutil"
 	"log"

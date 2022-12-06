@@ -1,8 +1,8 @@
 package main
 
 import (
-	"TinyCache/single_flight"
 	"fmt"
+	"github.com/CenGinHong/TinyCache/single_flight"
 	"log"
 	"sync"
 )

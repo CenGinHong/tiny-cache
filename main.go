@@ -56,6 +56,7 @@ func startAPIServer(apiAddr string, tiny *Group) {
 func main() {
 	var port int
 	var api bool
+	// 绑定端口
 	flag.IntVar(&port, "port", 8001, "Tinycache server port")
 	flag.BoolVar(&api, "api", false, "Start a api server?")
 	flag.Parse()
