@@ -73,7 +73,7 @@ func (g *Group) Get(key string) (ByteView, error) {
 	}
 	// 锁已经在mainCache中上了
 	if v, ok := g.mainCache.get(key); ok {
-		log.Println("[TinyCache] hit")
+		log.Println("[tiny-cache] hit")
 		return v, nil
 	}
 	// 没有命中缓存，就从数据源中获取
@@ -89,7 +89,7 @@ func (g *Group) load(key string) (value ByteView, err error) {
 				if value, err = g.getFromPeer(peer, key); err == nil {
 					return value, nil
 				}
-				log.Println("[TinyCache] Filed to get from peer", err)
+				log.Println("[tiny-cache] Filed to get from peer", err)
 			}
 		}
 		return g.getLocally(key)
