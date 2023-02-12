@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/CenGinHong/TinyCache/lru"
+	"github.com/tiny-cache/lru"
 	"sync"
 )
 

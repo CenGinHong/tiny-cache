@@ -1,10 +1,11 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
 )
 
 var db = map[string]string{
@@ -50,33 +51,31 @@ func startAPIServer(apiAddr string, tiny *Group) {
 		}))
 	log.Println("fontend server is running at", apiAddr)
 	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
-
 }
 
 func main() {
-	var port int
-	var api bool
-	// 绑定端口
-	flag.IntVar(&port, "port", 8001, "Tinycache server port")
-	flag.BoolVar(&api, "api", false, "Start a api server?")
-	flag.Parse()
-
-	apiAddr := "http://localhost:9999"
-	addrMap := map[int]string{
-		8001: "http://localhost:8001",
-		8002: "http://localhost:8002",
-		8003: "http://localhost:8003",
+	path := os.Args[1]
+	config, err := LoadConfig(path)
+	if err != nil {
+		log.Printf("config error: %v\n", err)
+		return
+	}
+	self := "http://" + net.JoinHostPort("localhost", config.PeerPort)
+	isExist := false
+	for _, v := range config.Peer {
+		if v == self {
+			isExist = true
+			break
+		}
 	}
 
-	var addrs []string
-	for _, v := range addrMap {
-		addrs = append(addrs, v)
+	if !isExist {
+		config.Peer = append(config.Peer, self)
 	}
-
 	tiny := createGroup()
-	// 这个是主监听端口
-	if api {
-		go startAPIServer(apiAddr, tiny)
+	// 主监听入口
+	if config.ApiPort != "" {
+		go startAPIServer("http://"+net.JoinHostPort("localhost", config.ApiPort), tiny)
 	}
-	startCacheServer(addrMap[port], addrs, tiny)
+	startCacheServer(self, config.Peer, tiny)
 }

@@ -1,0 +1,4 @@
+apiPort: 9999
+peerPort: 8001
+peer: 
+  - "http://localhost:8081"

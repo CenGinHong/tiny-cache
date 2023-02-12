@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/CenGinHong/TinyCache/consistenthash"
+	"github.com/tiny-cache/consistenthash"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -104,11 +103,10 @@ type httpGetter struct {
 
 func (g *httpGetter) Get(group string, key string) ([]byte, error) {
 	// 构建url
-	u := fmt.Sprintf(
-		"%v%v/%v",
-		g.baseUrl,
-		url.QueryEscape(group),
-		url.QueryEscape(key))
+	u, err := url.JoinPath(g.baseUrl, url.QueryEscape(group), url.QueryEscape(key))
+	if err != nil {
+		return nil, fmt.Errorf("url build failed: %v", err)
+	}
 	// 发起请求
 	res, err := http.Get(u)
 	if err != nil {
@@ -122,7 +120,7 @@ func (g *httpGetter) Get(group string, key string) ([]byte, error) {
 		return nil, fmt.Errorf("server returned: %v", res.Status)
 	}
 	// 读取返回值
-	bytes, err := ioutil.ReadAll(res.Body)
+	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading response body: %v", err)
 	}

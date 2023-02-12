@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/CenGinHong/TinyCache/single_flight"
+	"github.com/tiny-cache/single_flight"
 	"log"
 	"sync"
 )
@@ -76,7 +76,7 @@ func (g *Group) Get(key string) (ByteView, error) {
 		log.Println("[tiny-cache] hit")
 		return v, nil
 	}
-	// 没有命中缓存，就从数据源中获取
+	// 没有命中缓存，就从其他节点或者数据源中获取
 	return g.load(key)
 }
 
