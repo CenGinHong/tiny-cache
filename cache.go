@@ -6,7 +6,7 @@ import (
 )
 
 type cache struct {
-	mu         sync.Mutex // 互斥锁
+	mu         sync.Mutex // 互斥锁,不能使用读写锁，读方法涉及节点移动
 	lru        *lru.Cache // 实例化lru策略下的cache
 	cacheBytes int64      // 缓存最大使用量
 }

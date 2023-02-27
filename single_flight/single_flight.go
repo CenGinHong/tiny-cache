@@ -26,7 +26,7 @@ func (g *Group) Do(key string, fn func() (interface{}, error)) (interface{}, err
 		return c.val, c.err
 	}
 	// 目前没有正在进行的同一个key的请求
-	c := new(call)
+	c := &call{}
 	c.wg.Add(1)
 	g.m[key] = c
 	g.mu.Unlock()
